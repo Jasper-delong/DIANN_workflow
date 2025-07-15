@@ -62,21 +62,38 @@
       #表示安装成功
        
       ```
-*   **(可选) 蛋白数据库**: 一个 FASTA 格式的蛋白质序列数据库 (例如，从 UniProt 下载的人类蛋白质组)。
 
 ---
 
 ## 2. 项目设置 (Setup)
-
+本流程遵循将**代码与数据分离**的最佳实践。项目仓库只包含运行流程的代码和脚本，而大型数据文件（如原始数据和FASTA数据库）则存放在本地，不上传至 GitHub。
 1.  **克隆本项目到本地**:
     ```bash
-    git clone https://github.com/[你的用户名]/diann-dia-workflow.git
+    git clone https://github.com/Jasper-delong/diann-dia-workflow.git
     cd diann-dia-workflow
     ```
 
-2.  **准备数据和数据库**:
-    *   将你的质谱原始文件 (如 `.raw` 或 `.d` 文件) 存放在你电脑的**任何位置**，例如 `~/proteomics_data/raw_files`。**请不要将它们放入本项目文件夹内**。
-    *   将你的 FASTA 数据库文件也存放在一个方便访问的位置，例如 `~/proteomics_data/fasta/human.fasta`。
+2.  **下载蛋白质数据库**:
+    ```
+    # 定义将要保存FASTA文件的目录和文件名
+    FASTA_DIR="./data/fasta"
+    FASTA_FILENAME="uniprot-human-swissprot-$(date +%Y-%m-%d).fasta"
+
+    # 下载并解压
+    echo "--- 正在从 UniProt 下载人类参考蛋白质组到 ${FASTA_DIR} ---"
+    wget -O "${FASTA_DIR}/${FASTA_FILENAME}.gz" "https://rest.uniprot.org/uniprotkb/stream?compressed=true&download=true&format=fasta&query=%28reviewed%3Atrue%29+AND+%28model_organism%3A9606%29"
+
+    echo "--- 下载完成，正在解压... ---"
+    gunzip "${FASTA_DIR}/${FASTA_FILENAME}.gz"
+
+    echo "--- 数据库准备就绪，存放于: ${FASTA_DIR}/${FASTA_FILENAME} ---"
+    ```
+3. **定位你的原始数据**
+    将原始文件存（.raw或.d文件）放在你电脑的任何位置
+    - **Windows本地存储**:C:\Users\YourUser\Documents\Proteomics_Data (在WSL中对应的路径是 /mnt/c/Users/YourUser/Documents/Proteomics_Data)
+    - **集群存储**：/path/to/your/project/on/cluster/raw_files
+**重要**：请勿将大型原始数据文件放入本项目文件中
+
 
 ---
 
@@ -85,8 +102,30 @@
 核心分析流程通过一个 shell 脚本来执行，以确保参数的一致性和可重复性。
 
 ### 步骤 1: 配置运行脚本
+一切准备就绪后，**请打开 scripts/run_diann.sh 文件，将文件顶部的 RAW_FILE_DIR 和 FASTA_DB 变量修改为指向你刚刚准备好的文件路径。**
 
-打开 `scripts/run_diann.sh` 文件 (我们将在下一步创建它)，并修改顶部的变量，以匹配你的文件路径和期望参数。
+**重要！！这里需要自己进行修改，每一次使用前，因为路径都会改变**
+  ```
+    # scripts/run_diann.sh 中的示例配置
+
+    # --- 用户配置区 (请根据你的实际情况修改这里) ---
+
+    # 1. DIANN 可执行文件 (如果已配置好，保持 'diann' 即可)
+    DIANN_EXECUTABLE="diann"
+
+    # 2. 存放原始数据文件 (.raw, .d, 等) 的文件夹路径
+    #    重要: 使用绝对路径！
+    #    例如，在 Windows 的 D 盘: "/mnt/d/my_dia_data"
+    #    或在集群上: "/home/yourname/data/project_x/raw"
+    RAW_FILE_DIR="/path/to/your/raw_files"
+
+    # 3. 蛋白质数据库 (FASTA 格式) 的完整路径
+    #    它应该位于本项目内的 data/fasta/ 目录下
+    FASTA_DB="./data/fasta/uniprot-human-swissprot-2024-05-21.fasta"
+    THREADS=8
+  ```
+  **修改完.sh文件后，可以执行文件内容了**
+
 
 ### 步骤 2: 执行分析
 
@@ -123,3 +162,4 @@ bash scripts/run_diann.sh
 
 ## 许可证
 本项目采用 [MIT License](LICENSE)。
+

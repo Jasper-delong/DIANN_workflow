@@ -21,6 +21,7 @@ docs/
 !/data/.gitkeep
 !/results/.gitkeep
 !/docs/.gitkeep
+!/data/fasta/.gitkeep
 
 # 3. 明确忽略所有常见的质谱原始数据和中间文件格式
 #    这提供了双重保险。
