@@ -10,18 +10,26 @@
 # [最重要] 质谱项目特定规则 (Mass Spectrometry Specific)
 # -------------------------------------------------------------------
 
-# 1. 忽略大型数据、结果和文档文件夹下的所有内容
-#    这是防止意外上传大文件的核心规则。
-data/
-results/
-docs/
 
-# 2. 但是，通过 .gitkeep 文件保留这些空目录的结构
-#    .gitkeep 是一个空的占位文件，你需要手动创建它 (touch data/.gitkeep)
+
+# 1. 忽略指定文件夹内的所有内容
+#    注意：开头的斜杠 / 让路径更精确，* 代表所有内容
+/data/*
+/results/*
+/docs/*
+
+# 2. 但是，不要忽略这些文件夹中的 .gitkeep 文件
+#    这样就能保留空目录结构
 !/data/.gitkeep
+!/data/fasta/.gitkeep
 !/results/.gitkeep
 !/docs/.gitkeep
-!/data/fasta/.gitkeep
+
+# 3. 关键：同时，也不要忽略这些文件夹本身
+#    这能确保 Git 会进入目录检查豁免规则。
+!/data/
+!/results/
+!/docs/
 
 # 3. 明确忽略所有常见的质谱原始数据和中间文件格式
 #    这提供了双重保险。
