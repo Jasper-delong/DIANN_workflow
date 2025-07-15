@@ -26,10 +26,41 @@
 *   **DIANN**: 本流程测试版本为 `v2.1.0`。
     *   从 [DIANN GitHub Releases](https://github.com/vdemichev/DiaNN/releases) 下载最新的 Linux 可执行文件。
     *   **重要**: 将下载的可执行文件赋予执行权限，并建议将其移动到系统路径中，以便全局调用。
+    - 使用以下代码可以完成DIA-NN 2.1.0的安装
       ```bash
-      # 假设下载的文件为 diann-2.1.0.linux.x64
-      chmod +x diann-2.1.0.linux.x64
-      sudo mv diann-2.1.0.linux.x64 /usr/local/bin/diann
+      # 假设下载的文件为 DIA-NN-2.1.0-Academia-Linux.zip
+      #在家目录里建立一个downloads文件
+        mkdir -p ~/Downloads
+      # 进入 Downloads 文件夹
+        cd ~/Downloads
+      #下载文件
+        wget https://github.com/vdemichev/DiaNN/releases/download/2.0/DIA-NN-2.1.0-Academia-Linux.zip
+      #安装解压工具
+        sudo apt update
+        sudo apt install unzip
+      #解压文件
+        unzip DIA-NN-2.1.0-Academia-Linux.zip
+      #会获得一个文件，名称为 diann-2.1.0
+      #在家目录里创建一个新的目录“apps”，专门用于存放下载在linux中的应用
+        mkdir -p ~/apps
+      #将整个 “diann-2.1.0”移动到“apps”目录里
+        mv ~/downloads/diann-2.1.0 ~/apps/
+      # 进入 DIANN 的新家
+        cd ~/apps/diann-2.1.0
+      # 赋予权限
+        chmod +x diann-linux
+      #创建符号连接（这是最关键的一步）我们要在 /usr/local/bin 里创建一个名为 diann 的“快捷方式”，让它指向我们存放在 ~/apps/diann-2.1.0/ 里的真实程序 diann-linux。
+      #语法: sudo ln -s [源文件完整路径] [快捷方式的完整路径]
+        sudo ln -s ~/apps/diann-2.1.0/diann-linux /usr/local/bin/diann
+      #进行验证
+        diann --version
+      #会出现如下结果
+        DIA-NN 2.1.0 Academia  (Data-Independent Acquisition by Neural Networks)
+        Compiled on Mar 23 2025 15:49:03
+        Current date and time: Tue Jul 15 08:45:41 2025
+        Logical CPU cores: 8..........（后面还有一大串）
+      #表示安装成功
+       
       ```
 *   **(可选) 蛋白数据库**: 一个 FASTA 格式的蛋白质序列数据库 (例如，从 UniProt 下载的人类蛋白质组)。
 
