@@ -1,82 +1,65 @@
 #!/bin/bash
 # ==============================================================================
-# 智能 DIANN 分析脚本 (自动化两步法工作流)
+# 智能 DIANN 分析脚本 - 阶段一: 谱图库生成
 # ==============================================================================
 # 工作流程:
-# 1. 检查最终的实验谱图库 (PROJECT_LIBRARY) 是否存在。
-# 2. 如果不存在，则从 FASTA 和原始数据生成它。
-# 3. 如果已存在，则直接使用它进行分析。
+# 1. 检查理论谱图库 (PREDICTED_LIBRARY) 是否存在。
+# 2. 如果不存在，则根据指定的 FASTA 和酶切参数，生成一个理论预测谱图库。
+# 3. 如果已存在，则跳过生成步骤。
 # ==============================================================================
 
-echo "--- 开始 DIANN 智能分析流程 ---"
+# --- 自动确定绝对路径 (让脚本与运行位置无关) ---
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
+
+echo "--- 项目根目录已确定为: $PROJECT_ROOT ---"
+echo "--- 开始 DIANN 谱图库生成流程 ---"
 
 # --- 用户配置区 (请根据你的实际情况修改这里) ---
 
 # 1. DIANN 可执行文件
 DIANN_EXECUTABLE="diann"
 
-# 2. 原始数据文件夹路径 (绝对路径)
-RAW_FILE_DIR="/mnt/d/20250626_analysis"
+# 2. 蛋白质数据库 (FASTA 格式) 的文件名
+FASTA_FILENAME="uniprot-human-swissprot-2025-07-15.fasta"
 
-# 3. 蛋白质数据库 (FASTA 格式) 的完整路径
-#    (仅在生成谱图库时需要)
-FASTA_DB="home/judelong/bioinfo/GitHub_projects/DIANN_workflow/data/fasta/uniprot-human-swissprot-2025-07-15.fasta"
+# 3. CPU 线程数
+THREADS=6
 
-# 4. 【核心】最终项目谱图库的路径和文件名
-#    这是我们流程的核心检查点。
-PROJECT_LIBRARY="./results/project_library.tsv"
+# --- 自动构建内部文件的绝对路径 ---
+FASTA_DB_ABSPATH="$PROJECT_ROOT/data/fasta/$FASTA_FILENAME"
+PREDICTED_LIBRARY_ABSPATH="$PROJECT_ROOT/results/predicted_library.tsv"
 
-# 5. 最终分析报告的输出路径
-FINAL_REPORT_OUT="./results/report.tsv"
+# --- 智能建库逻辑 ---
+# 确保 results 目录存在
+mkdir -p "$PROJECT_ROOT/results"
 
-# 6. CPU 线程数
-THREADS=8
+# 检查理论谱图库是否存在
+if [ ! -f "$PREDICTED_LIBRARY_ABSPATH" ]; then
+    echo "--- 未找到理论谱图库 ($PREDICTED_LIBRARY_ABSPATH) ---"
+    echo "--- 正在从 FASTA 文件生成新的理论谱图库... ---"
 
-# --- 智能工作流逻辑 ---
-
-# 检查输出目录是否存在
-mkdir -p ./results
-
-# 步骤一: 检查并生成项目谱图库
-if [ ! -f "$PROJECT_LIBRARY" ]; then
-    echo "--- 未找到项目谱图库 ($PROJECT_LIBRARY) ---"
-    echo "--- 正在从 FASTA 和原始数据生成新的谱图库... ---"
-
-    # 使用 DIANN 从 FASTA 生成谱图库
+    # 【核心命令】使用我们验证成功的参数来生成理论库
     $DIANN_EXECUTABLE \
-    --f "$RAW_FILE_DIR"/*.raw \
-    --fasta "$FASTA_DB" \
-    --gen-spec-lib \
-    --out-lib "$PROJECT_LIBRARY" \
-    --threads $THREADS \
-    --verbose 1
+    --fasta "$FASTA_DB_ABSPATH" \
+    --fasta-search \
+    --cut K*,R*,!*P \
+    --missed-cleavages 1 \
+    --predictor \
+    --out-lib "$PREDICTED_LIBRARY_ABSPATH" \
+    --threads $THREADS
 
-    if [ $? -eq 0 ]; then
-        echo "--- 谱图库生成成功！---"
+    # 检查谱图库文件是否被成功创建且内容不为空
+    if [ -s "$PREDICTED_LIBRARY_ABSPATH" ]; then
+        echo "--- 理论谱图库生成成功！存放于: $PREDICTED_LIBRARY_ABSPATH ---"
     else
-        echo "--- 错误: 谱图库生成失败！请检查日志。 ---"
-        exit 1 # 如果建库失败，则退出脚本
+        echo "--- 错误: 理论谱图库生成失败！文件为空或不存在。请检查上面的日志。 ---"
+        exit 1 # 如果建库失败，则立即退出脚本
     fi
 else
-    echo "--- 已找到现有的项目谱图库: $PROJECT_LIBRARY ---"
-    echo "--- 将跳过建库步骤，直接使用此库进行分析。 ---"
+    echo "--- 已找到现有的理论谱图库: $PREDICTED_LIBRARY_ABSPATH ---"
+    echo "--- 无需重新生成。 ---"
 fi
 
-
-# 步骤二: 使用项目谱图库进行最终分析
-echo "" # 打印一个空行，让输出更清晰
-echo "--- 开始最终分析，使用谱图库: $PROJECT_LIBRARY ---"
-
-$DIANN_EXECUTABLE \
---f "$RAW_FILE_DIR"/*.raw \
---lib "$PROJECT_LIBRARY" \
---out "$FINAL_REPORT_OUT" \
---threads $THREADS \
---verbose 1 \
---matrices \
---reanalyse # <-- 仍然推荐保留，它会用库对数据进行更精细的二次优化
-
-# --- 结束 ---
 echo ""
-echo "--- DIANN 智能分析流程完成 ---"
-echo "最终分析报告位于: $FINAL_REPORT_OUT"
+echo "--- DIANN 谱图库生成流程完成 ---"
