@@ -16,6 +16,8 @@ echo "--- 开始 DIANN 智能分析流程 ---"
 
 # --- 用户配置区 (请根据你的实际情况修改这里) ---
 
+# 从这里往下可以进行修改
+
 # 1. DIANN 可执行文件
 DIANN_EXECUTABLE="diann"
 
@@ -31,6 +33,8 @@ THREADS=6
 # 5. 我们只定义库的基础名，脚本会自动处理 DIANN 生成的后缀
 LIBRARY_BASENAME="predicted_library"
 
+# 从这里往上可以进行修改
+
 # --- 自动构建内部文件的绝对路径 ---
 FASTA_DB_ABSPATH="$PROJECT_ROOT/data/fasta/$FASTA_FILENAME"
 # 这是 DIANN 生成库时使用的“基础路径”
@@ -42,7 +46,8 @@ FINAL_REPORT_OUT_ABSPATH="$PROJECT_ROOT/results/final_report.tsv"
 
 # --- 【核心】准备文件参数列表 ---
 echo "--- 正在扫描原始数据文件夹: $RAW_FILE_DIR ---"
-# 注意：如果你的文件后缀不是 .raw，请修改下面的 -name "*.raw"
+# 注意：如果你的文件后缀不是 .raw，请修改下面的 -name "*.raw"。
+#比如，如果是.d文件，只要修改-name "*.raw"为-name "*.d"就可以了
 mapfile -t RAW_FILES < <(find "$RAW_FILE_DIR" -maxdepth 1 -name "*.raw")
 
 # 检查是否找到了任何文件
